@@ -36,8 +36,15 @@ jobs:
           flutter create . --platforms=android
           flutter pub get
 
-          # 🔧 Automatically update Kotlin version
-          sed -i "s|id 'org.jetbrains.kotlin.android' version '[0-9.]*'|id 'org.jetbrains.kotlin.android' version '2.2.10'|" android/settings.gradle
+          # 🔧 Automatically update Kotlin version in settings.gradle (new projects)
+          if [ -f "android/settings.gradle" ]; then
+            sed -i "s|id 'org.jetbrains.kotlin.android' version '[0-9.]*' apply false|id 'org.jetbrains.kotlin.android' version '2.2.10' apply false|" android/settings.gradle
+          fi
+
+          # 🔧 Automatically update Kotlin version in build.gradle (older projects)
+          if [ -f "android/build.gradle" ]; then
+            sed -i "s|ext.kotlin_version = '[0-9.]*'|ext.kotlin_version = '2.2.10'|" android/build.gradle
+          fi
 
           # Add INTERNET permission
           sed -i '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
