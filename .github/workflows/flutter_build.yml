@@ -19,14 +19,24 @@ jobs:
         with:
           flutter-version: '3.24.0'
 
-      # 🔧 Patch Gradle + Kotlin in existing android folder
+      - name: Get dependencies
+        run: flutter pub get
+
+      # ---------------- Regenerate android folder if missing ----------------
+      - name: Regenerate android folder if missing
+        run: |
+          if [ ! -d "android" ]; then
+            echo "⚠ android folder missing. Creating..."
+            flutter create --platforms=android .
+          fi
+
+      # ---------------- Patch Gradle + Kotlin ----------------
       - name: Patch Gradle + Kotlin versions
         run: |
-          echo "🔧 Patching Gradle + Kotlin in android folder..."
-          
+          echo "🔧 Patching Gradle + Kotlin..."
           # Gradle wrapper
           sed -i 's#distributionUrl=.*#distributionUrl=https://services.gradle.org/distributions/gradle-8.2-all.zip#' android/gradle/wrapper/gradle-wrapper.properties || true
-          
+
           # Kotlin version (old style build.gradle)
           if grep -q "ext.kotlin_version" android/build.gradle; then
             sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.25"/' android/build.gradle
@@ -42,10 +52,11 @@ jobs:
             sed -i 's/classpath "com.android.tools.build:gradle:[^"]*"/classpath "com.android.tools.build:gradle:8.1.2"/' android/build.gradle
           fi
 
-      # 🗂 Regenerate AndroidManifest.xml safely
+      # ---------------- Regenerate AndroidManifest.xml ----------------
       - name: Regenerate AndroidManifest.xml
         run: |
           echo "📝 Regenerating AndroidManifest.xml..."
+          mkdir -p android/app/src/main
           cat > android/app/src/main/AndroidManifest.xml <<EOL
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.onechat">
@@ -89,30 +100,25 @@ jobs:
 </manifest>
 EOL
 
-      - name: Get dependencies
-        run: flutter pub get
-
-      # 🖼 Safe launcher icon generation
+      # ---------------- Safe launcher icon generation ----------------
       - name: Apply launcher icon safely
         run: |
           echo "🖼 Preparing res folders for launcher icons..."
-          
-          # Ensure all mipmap directories exist
           for size in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
             path="android/app/src/main/res/mipmap-$size"
             if [ -f "$path" ]; then
-              echo "⚠ Found file at $path, removing..."
               rm "$path"
             fi
             mkdir -p "$path"
           done
 
-          # Generate launcher icons from image/logo.png
           flutter pub run flutter_launcher_icons:main
 
+      # ---------------- Build release APK ----------------
       - name: Build release APK
         run: flutter build apk --release
 
+      # ---------------- Upload APK artifact ----------------
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
