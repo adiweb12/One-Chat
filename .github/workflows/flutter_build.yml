@@ -19,61 +19,44 @@ jobs:
         with:
           flutter-version: '3.24.0'
 
-      - name: Get dependencies
-        run: flutter pub get
-
+      # 🔧 Patch Gradle + Kotlin in existing android folder
       - name: Patch Gradle + Kotlin versions
         run: |
-          echo "🔧 Updating Gradle & Kotlin..."
-
-          # Update Gradle wrapper to 8.2
-          sed -i 's#distributionUrl=.*#distributionUrl=https://services.gradle.org/distributions/gradle-8.2-all.zip#' android/gradle/wrapper/gradle-wrapper.properties
-
-          # Patch kotlin_version in build.gradle (old projects)
+          echo "🔧 Patching Gradle + Kotlin in existing android folder..."
+          
+          # Patch Gradle wrapper
+          sed -i 's#distributionUrl=.*#distributionUrl=https://services.gradle.org/distributions/gradle-8.2-all.zip#' android/gradle/wrapper/gradle-wrapper.properties || true
+          
+          # Patch Kotlin version (old style build.gradle)
           if grep -q "ext.kotlin_version" android/build.gradle; then
             sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.25"/' android/build.gradle
           fi
 
-          # Patch kotlin plugin in settings.gradle (new projects)
+          # Patch Kotlin plugin (new style settings.gradle)
           if grep -q "org.jetbrains.kotlin.android" android/settings.gradle; then
             sed -i 's/id "org.jetbrains.kotlin.android" version "[^"]*"/id "org.jetbrains.kotlin.android" version "1.9.25"/' android/settings.gradle
           fi
 
-          # Patch Android Gradle Plugin (AGP)
+          # Patch Android Gradle Plugin
           if grep -q "com.android.tools.build:gradle" android/build.gradle; then
             sed -i 's/classpath "com.android.tools.build:gradle:[^"]*"/classpath "com.android.tools.build:gradle:8.1.2"/' android/build.gradle
           fi
 
-      - name: Try build release APK
-        id: build-apk
-        continue-on-error: true
-        run: flutter build apk --release
-
-      - name: Handle failed build (regenerate android folder)
-        if: steps.build-apk.outcome == 'failure'
+      - name: Add INTERNET permission + set app name
         run: |
-          echo "⚠️ Build failed. Regenerating android/ folder..."
-          rm -rf android
-          flutter create --platforms=android .
-
-          # Add INTERNET permission
+          # Add INTERNET permission if missing
           sed -i '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
 
-          # Change app name to OneChat
+          # Ensure app name is OneChat
           sed -i 's/android:label="[^"]*"/android:label="OneChat"/' android/app/src/main/AndroidManifest.xml
 
-      - name: Apply branding (logo + name)
-        run: |
-          flutter pub get
-          flutter pub run flutter_launcher_icons
-          sed -i 's/android:label="[^"]*"/android:label="OneChat"/' android/app/src/main/AndroidManifest.xml
+      - name: Get dependencies
+        run: flutter pub get
 
-      - name: Retry build release APK if failed earlier
-        if: steps.build-apk.outcome == 'failure'
-        run: flutter build apk --release
+      - name: Apply launcher icon
+        run: flutter pub run flutter_launcher_icons
 
-      - name: Build release APK (normal path)
-        if: steps.build-apk.outcome == 'success'
+      - name: Build release APK
         run: flutter build apk --release
 
       - name: Upload APK artifact
