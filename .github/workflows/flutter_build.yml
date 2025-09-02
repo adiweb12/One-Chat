@@ -18,7 +18,7 @@ jobs:
       - name: ⚙️ Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0' # your version
+          flutter-version: '3.24.0'
 
       - name: 📦 Get dependencies
         run: flutter pub get
@@ -36,12 +36,15 @@ jobs:
           flutter create . --platforms=android
           flutter pub get
 
+          # 🔧 Automatically update Kotlin version
+          sed -i "s|id 'org.jetbrains.kotlin.android' version '[0-9.]*'|id 'org.jetbrains.kotlin.android' version '2.2.10'|" android/settings.gradle
+
           # Add INTERNET permission
           sed -i '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
 
           # Change app name to OneChat
           sed -i 's/android:label="[^"]*"/android:label="OneChat"/' android/app/src/main/AndroidManifest.xml
-          
+
           # Generate launcher icons from image/logo.png
           flutter pub run flutter_launcher_icons
 
@@ -57,7 +60,7 @@ jobs:
           flutter pub get
           flutter pub run flutter_launcher_icons
           sed -i 's/android:label="[^"]*"/android:label="OneChat"/' android/app/src/main/AndroidManifest.xml
-          
+
           flutter build apk --release
 
       - name: ⬆️ Upload APK artifact
