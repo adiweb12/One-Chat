@@ -2,51 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
-import 'package:shared_preferences/shared_preferences.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  String? token = await AuthService.getToken();
-  String? username = await AuthService.getUsername();
-  runApp(MyApp(initialToken: token, initialUsername: username));
+void main() {
+  runApp(MyApp());
 }
 
 const String SERVER_IP = "onechatjdifivifrrfigiufitxtd6xy.onrender.com";
 
-// ---------------- AUTH SERVICE ----------------
-class AuthService {
-  static const _tokenKey = 'auth_token';
-  static const _usernameKey = 'auth_username';
-
-  static Future<void> saveSession(String token, String username) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
-    await prefs.setString(_usernameKey, username);
-  }
-
-  static Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
-  }
-
-  static Future<String?> getUsername() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_usernameKey);
-  }
-
-  static Future<void> clearSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
-    await prefs.remove(_usernameKey);
-  }
-}
-
 class MyApp extends StatelessWidget {
-  final String? initialToken;
-  final String? initialUsername;
-
-  MyApp({this.initialToken, this.initialUsername});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -60,9 +23,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: initialToken != null && initialUsername != null
-          ? MainPage(username: initialUsername!, token: initialToken!)
-          : LoginPage(),
+      home: LoginPage(),
     );
   }
 }
@@ -102,7 +63,6 @@ class _LoginPageState extends State<LoginPage> {
       
       if (data['success']) {
         String token = data['token'];
-        await AuthService.saveSession(token, username);
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -644,21 +604,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  void logout() async {
-    // Call server to invalidate token
-    try {
-      var url = Uri.parse("https://$SERVER_IP/logout");
-      await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: json.encode({"token": widget.token}),
-      );
-    } catch (e) {
-      print("Error logging out on server: $e");
-    }
-
-    // Clear local session and navigate to login page
-    await AuthService.clearSession();
+  void logout() {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => LoginPage()),
@@ -935,3 +881,4 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 }
+                      
