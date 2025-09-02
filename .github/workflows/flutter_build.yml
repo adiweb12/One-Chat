@@ -17,10 +17,28 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0' # your version
+          flutter-version: '3.24.0'
 
       - name: Get dependencies
         run: flutter pub get
+
+      - name: Patch Gradle + Kotlin versions
+        run: |
+          echo "🔧 Updating Gradle & Kotlin..."
+          # Update Gradle wrapper
+          sed -i 's/distributionUrl=.*/distributionUrl=https\\://services.gradle.org/distributions/gradle-8.2-all.zip/' android/gradle/wrapper/gradle-wrapper.properties
+
+          # Update Kotlin + AGP inside build.gradle or settings.gradle
+          if grep -q "ext.kotlin_version" android/build.gradle; then
+            sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.25"/' android/build.gradle
+          fi
+
+          if grep -q "org.jetbrains.kotlin.android" android/settings.gradle; then
+            sed -i 's/id "org.jetbrains.kotlin.android" version "[^"]*"/id "org.jetbrains.kotlin.android" version "1.9.25"/' android/settings.gradle
+          fi
+
+          # Update Android Gradle Plugin (AGP)
+          sed -i 's/classpath "com.android.tools.build:gradle:[^"]*"/classpath "com.android.tools.build:gradle:8.1.2"/' android/build.gradle || true
 
       - name: Try build release APK
         id: build-apk
@@ -40,14 +58,10 @@ jobs:
           # Change app name to OneChat
           sed -i 's/android:label="[^"]*"/android:label="OneChat"/' android/app/src/main/AndroidManifest.xml
 
-      # ✅ Always regenerate logo and app name
       - name: Apply branding (logo + name)
         run: |
-          # Make sure dependencies are up to date
           flutter pub get
-          # Generate launcher icons from image/logo.png
           flutter pub run flutter_launcher_icons
-          # Ensure app name is OneChat
           sed -i 's/android:label="[^"]*"/android:label="OneChat"/' android/app/src/main/AndroidManifest.xml
 
       - name: Retry build release APK if failed earlier
