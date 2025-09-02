@@ -17,31 +17,42 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.24.0' # your version
 
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Apply project-specific configurations
-        run: |
-          # Use a more reliable sed command to add INTERNET permission
-          sed -i 's|<manifest>|<manifest>\n\    <uses-permission android:name="android.permission.INTERNET"/>|g' android/app/src/main/AndroidManifest.xml
+      - name: Try building with existing android folder
+        id: build-apk-primary
+        continue-on-error: true
+        run: flutter build apk --release
 
-          # Add the required SDK versions (this part is good)
+      - name: Handle failed build: Regenerate android folder and fix permissions
+        if: steps.build-apk-primary.outcome == 'failure'
+        run: |
+          echo "⚠️ Initial build failed. Regenerating the android/ folder."
+          # Remove the corrupted android folder
+          rm -rf android
+          # Create a new, clean flutter project with the android platform
+          flutter create --platforms=android .
+          # Add internet permission to the new AndroidManifest.xml
+          sed -i 's|<manifest>|<manifest>\n\    <uses-permission android:name="android.permission.INTERNET"/>|g' android/app/src/main/AndroidManifest.xml
+          # Set minimum and target SDK versions required for flutter_secure_storage
           sed -i 's/minSdkVersion.*/minSdkVersion 21/' android/app/build.gradle
           sed -i 's/targetSdkVersion.*/targetSdkVersion 34/' android/app/build.gradle
-
           # Ensure app name is OneChat
           sed -i 's/android:label="[^"]*"/android:label="OneChat"/' android/app/src/main/AndroidManifest.xml
-          
-          # Generate launcher icons
+          # Get dependencies for the new project structure
           flutter pub get
+          # Generate launcher icons from image/logo.png
           flutter pub run flutter_launcher_icons
 
-      - name: Build release APK
+      - name: Retry build after regeneration
+        if: steps.build-apk-primary.outcome == 'failure'
         run: flutter build apk --release
 
       - name: Upload APK artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
