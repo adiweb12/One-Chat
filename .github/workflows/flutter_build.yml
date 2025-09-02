@@ -22,40 +22,20 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Try build release APK
-        id: build-apk
-        continue-on-error: true
-        run: flutter build apk --release
-
-      - name: Handle failed build (regenerate android folder)
-        if: steps.build-apk.outcome == 'failure'
+      - name: Apply project-specific configurations (Pre-Build)
         run: |
-          echo "⚠️ Build failed. Regenerating android/ folder..."
-          rm -rf android
-          flutter create --platforms=android .
-
           # Add INTERNET permission
           sed -i '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
 
           # Change app name to OneChat
           sed -i 's/android:label="[^"]*"/android:label="OneChat"/' android/app/src/main/AndroidManifest.xml
 
-      # ✅ Always regenerate logo and app name
-      - name: Apply branding (logo + name)
-        run: |
-          # Make sure dependencies are up to date
-          flutter pub get
-          # Generate launcher icons from image/logo.png
-          flutter pub run flutter_launcher_icons
-          # Ensure app name is OneChat
-          sed -i 's/android:label="[^"]*"/android:label="OneChat"/' android/app/src/main/AndroidManifest.xml
+          # Set minimum and target SDK versions required for flutter_secure_storage
+          sed -i 's/minSdkVersion.*/minSdkVersion 21/' android/app/build.gradle
+          sed -i 's/targetSdkVersion.*/targetSdkVersion 34/' android/app/build.gradle
 
-      - name: Retry build release APK if failed earlier
-        if: steps.build-apk.outcome == 'failure'
-        run: flutter build apk --release
-
-      - name: Build release APK (normal path)
-        if: steps.build-apk.outcome == 'success'
+      - name: Build release APK
+        id: build-apk
         run: flutter build apk --release
 
       - name: Upload APK artifact
@@ -63,3 +43,4 @@ jobs:
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
