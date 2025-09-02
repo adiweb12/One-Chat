@@ -17,25 +17,30 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0' # your version
+          flutter-version: '3.24.0'
 
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Apply project-specific configurations (Pre-Build)
+      - name: Apply project-specific configurations
         run: |
-          # Add INTERNET permission
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
+          # Use a more reliable sed command to add INTERNET permission
+          sed -i '2i\
+              <uses-permission android:name="android.permission.INTERNET"/>
+          ' android/app/src/main/AndroidManifest.xml
 
-          # Change app name to OneChat
-          sed -i 's/android:label="[^"]*"/android:label="OneChat"/' android/app/src/main/AndroidManifest.xml
-
-          # Set minimum and target SDK versions required for flutter_secure_storage
+          # Add the required SDK versions (this part is good)
           sed -i 's/minSdkVersion.*/minSdkVersion 21/' android/app/build.gradle
           sed -i 's/targetSdkVersion.*/targetSdkVersion 34/' android/app/build.gradle
 
+          # Ensure app name is OneChat
+          sed -i 's/android:label="[^"]*"/android:label="OneChat"/' android/app/src/main/AndroidManifest.xml
+          
+          # Generate launcher icons
+          flutter pub get
+          flutter pub run flutter_launcher_icons
+
       - name: Build release APK
-        id: build-apk
         run: flutter build apk --release
 
       - name: Upload APK artifact
