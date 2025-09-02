@@ -25,9 +25,7 @@ jobs:
       - name: Apply project-specific configurations
         run: |
           # Use a more reliable sed command to add INTERNET permission
-          sed -i '2i\
-              <uses-permission android:name="android.permission.INTERNET"/>
-          ' android/app/src/main/AndroidManifest.xml
+          sed -i 's|<manifest>|<manifest>\n\    <uses-permission android:name="android.permission.INTERNET"/>|g' android/app/src/main/AndroidManifest.xml
 
           # Add the required SDK versions (this part is good)
           sed -i 's/minSdkVersion.*/minSdkVersion 21/' android/app/build.gradle
