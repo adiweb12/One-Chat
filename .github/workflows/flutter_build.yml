@@ -27,7 +27,7 @@ jobs:
         continue-on-error: true
         run: flutter build apk --release
 
-      - name: Handle failed build: Regenerate android folder and fix permissions
+      - name: Handle failed build Regenerate android folder and fix permissions
         if: steps.build-apk-primary.outcome == 'failure'
         run: |
           echo "⚠️ Initial build failed. Regenerating the android/ folder."
