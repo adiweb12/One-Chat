@@ -19,7 +19,7 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0' # change to your Flutter version
+          flutter-version: '3.24.0'
 
       # 3️⃣ Get dependencies
       - name: Get dependencies
@@ -47,7 +47,7 @@ jobs:
           # settings.gradle
           cat > android/settings.gradle <<EOL
 include ':app'
-rootProject.name = 'onechat'
+rootProject.name = 'onechat' 
 EOL
 
           # Project-level build.gradle
