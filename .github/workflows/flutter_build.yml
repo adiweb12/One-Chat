@@ -11,50 +11,111 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2️⃣ Install Flutter
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0' # your version
+          flutter-version: '3.24.0' # change to your Flutter version
 
+      # 3️⃣ Get dependencies
       - name: Get dependencies
         run: flutter pub get
 
+      # 4️⃣ Try building with existing android folder
       - name: Try building with existing android folder
         id: build-apk-primary
         continue-on-error: true
         run: flutter build apk --release
 
-      - name: Handle failed build Regenerate android folder and fix permissions
+      # 5️⃣ Handle failed build: regenerate android folder
+      - name: Regenerate android folder if build failed
         if: steps.build-apk-primary.outcome == 'failure'
         run: |
-          echo "⚠️ Initial build failed. Regenerating the android/ folder."
-          # Remove the corrupted android folder
+          echo "⚠️ Initial build failed. Regenerating android/ folder."
+
+          # Remove old android folder
           rm -rf android
-          # Create a new, clean flutter project with the android platform
-          flutter create --platforms=android .
-          # Add internet permission to the new AndroidManifest.xml
-          sed -i 's|<manifest>|<manifest>\n\    <uses-permission android:name="android.permission.INTERNET"/>|g' android/app/src/main/AndroidManifest.xml
-          # Set minimum and target SDK versions required for flutter_secure_storage
-          sed -i 's/minSdkVersion.*/minSdkVersion 21/' android/app/build.gradle
-          sed -i 's/targetSdkVersion.*/targetSdkVersion 34/' android/app/build.gradle
-          # Ensure app name is OneChat
-          sed -i 's/android:label="[^"]*"/android:label="OneChat"/' android/app/src/main/AndroidManifest.xml
-          # Get dependencies for the new project structure
+
+          # Minimal android folder structure
+          mkdir -p android/app/src/main
+          mkdir -p android/gradle/wrapper
+
+          # settings.gradle
+          cat > android/settings.gradle <<EOL
+include ':app'
+rootProject.name = 'onechat'
+EOL
+
+          # Project-level build.gradle
+          cat > android/build.gradle <<EOL
+buildscript {
+    ext.kotlin_version = '1.9.0'
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.1.1'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:\$kotlin_version"
+    }
+}
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+EOL
+
+          # App-level build.gradle
+          cat > android/app/build.gradle <<EOL
+apply plugin: 'com.android.application'
+android {
+    namespace 'com.adith.onechat'
+    compileSdk 34
+    defaultConfig {
+        applicationId "com.adith.onechat"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+    }
+}
+dependencies {
+}
+EOL
+
+          # AndroidManifest.xml with Internet permission
+          cat > android/app/src/main/AndroidManifest.xml <<EOL
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.adith.onechat">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <application
+        android:label="OneChat"
+        android:icon="@mipmap/ic_launcher">
+    </application>
+</manifest>
+EOL
+
+          # Fetch dependencies for new android folder
           flutter pub get
+
           # Generate launcher icons from image/logo.png
           flutter pub run flutter_launcher_icons
 
+      # 6️⃣ Retry build after regeneration
       - name: Retry build after regeneration
         if: steps.build-apk-primary.outcome == 'failure'
         run: flutter build apk --release
 
+      # 7️⃣ Upload APK artifact
       - name: Upload APK artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
-
