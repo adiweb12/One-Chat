@@ -22,22 +22,22 @@ jobs:
       # 🔧 Patch Gradle + Kotlin in existing android folder
       - name: Patch Gradle + Kotlin versions
         run: |
-          echo "🔧 Patching Gradle + Kotlin in existing android folder..."
+          echo "🔧 Patching Gradle + Kotlin in android folder..."
           
-          # Patch Gradle wrapper
+          # Gradle wrapper
           sed -i 's#distributionUrl=.*#distributionUrl=https://services.gradle.org/distributions/gradle-8.2-all.zip#' android/gradle/wrapper/gradle-wrapper.properties || true
           
-          # Patch Kotlin version (old style build.gradle)
+          # Kotlin version (old style build.gradle)
           if grep -q "ext.kotlin_version" android/build.gradle; then
             sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.25"/' android/build.gradle
           fi
 
-          # Patch Kotlin plugin (new style settings.gradle)
+          # Kotlin plugin (new style settings.gradle)
           if grep -q "org.jetbrains.kotlin.android" android/settings.gradle; then
             sed -i 's/id "org.jetbrains.kotlin.android" version "[^"]*"/id "org.jetbrains.kotlin.android" version "1.9.25"/' android/settings.gradle
           fi
 
-          # Patch Android Gradle Plugin
+          # Android Gradle Plugin
           if grep -q "com.android.tools.build:gradle" android/build.gradle; then
             sed -i 's/classpath "com.android.tools.build:gradle:[^"]*"/classpath "com.android.tools.build:gradle:8.1.2"/' android/build.gradle
           fi
@@ -53,8 +53,23 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Apply launcher icon
-        run: flutter pub run flutter_launcher_icons
+      # 🖼 Safe launcher icon generation
+      - name: Apply launcher icon safely
+        run: |
+          echo "🖼 Preparing res folders for launcher icons..."
+          
+          # Ensure all mipmap directories exist
+          for size in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            path="android/app/src/main/res/mipmap-$size"
+            if [ -f "$path" ]; then
+              echo "⚠ Found file at $path, removing..."
+              rm "$path"
+            fi
+            mkdir -p "$path"
+          done
+
+          # Generate launcher icons from image/logo.png
+          flutter pub run flutter_launcher_icons:main
 
       - name: Build release APK
         run: flutter build apk --release
