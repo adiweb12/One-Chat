@@ -29,18 +29,20 @@ jobs:
           # Update Gradle wrapper to 8.2
           sed -i 's#distributionUrl=.*#distributionUrl=https://services.gradle.org/distributions/gradle-8.2-all.zip#' android/gradle/wrapper/gradle-wrapper.properties
 
-          # Update Kotlin version (build.gradle way)
+          # Patch kotlin_version in build.gradle (old projects)
           if grep -q "ext.kotlin_version" android/build.gradle; then
             sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.25"/' android/build.gradle
           fi
 
-          # Update Kotlin version (settings.gradle way)
+          # Patch kotlin plugin in settings.gradle (new projects)
           if grep -q "org.jetbrains.kotlin.android" android/settings.gradle; then
             sed -i 's/id "org.jetbrains.kotlin.android" version "[^"]*"/id "org.jetbrains.kotlin.android" version "1.9.25"/' android/settings.gradle
           fi
 
-          # Update Android Gradle Plugin version
-          sed -i 's/classpath "com.android.tools.build:gradle:[^"]*"/classpath "com.android.tools.build:gradle:8.1.2"/' android/build.gradle || true
+          # Patch Android Gradle Plugin (AGP)
+          if grep -q "com.android.tools.build:gradle" android/build.gradle; then
+            sed -i 's/classpath "com.android.tools.build:gradle:[^"]*"/classpath "com.android.tools.build:gradle:8.1.2"/' android/build.gradle
+          fi
 
       - name: Try build release APK
         id: build-apk
