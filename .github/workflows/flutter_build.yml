@@ -1,50 +1,38 @@
-name: Flutter Build and Repair
+name: Flutter Build
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ⬇️ Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: ⚙️ Setup Flutter
+      - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.24.0' # your version
 
-      - name: 📦 Get dependencies
+      - name: Get dependencies
         run: flutter pub get
 
-      - name: 🛠️ Try to build release APK
+      - name: Try build release APK
         id: build-apk
         continue-on-error: true
         run: flutter build apk --release
 
-      - name: 🔄 Handle failed build by regenerating android folder
+      - name: Handle failed build (regenerate android folder)
         if: steps.build-apk.outcome == 'failure'
         run: |
           echo "⚠️ Build failed. Regenerating android/ folder..."
           rm -rf android
-          flutter create . --platforms=android
-          flutter pub get
-
-          # 🔧 Automatically update Kotlin version in settings.gradle (new projects)
-          if [ -f "android/settings.gradle" ]; then
-            sed -i "s|id 'org.jetbrains.kotlin.android' version '[0-9.]*' apply false|id 'org.jetbrains.kotlin.android' version '2.2.10' apply false|" android/settings.gradle
-          fi
-
-          # 🔧 Automatically update Kotlin version in build.gradle (older projects)
-          if [ -f "android/build.gradle" ]; then
-            sed -i "s|ext.kotlin_version = '[0-9.]*'|ext.kotlin_version = '2.2.10'|" android/build.gradle
-          fi
+          flutter create --platforms=android .
 
           # Add INTERNET permission
           sed -i '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
@@ -52,27 +40,26 @@ jobs:
           # Change app name to OneChat
           sed -i 's/android:label="[^"]*"/android:label="OneChat"/' android/app/src/main/AndroidManifest.xml
 
+      # ✅ Always regenerate logo and app name
+      - name: Apply branding (logo + name)
+        run: |
+          # Make sure dependencies are up to date
+          flutter pub get
           # Generate launcher icons from image/logo.png
           flutter pub run flutter_launcher_icons
+          # Ensure app name is OneChat
+          sed -i 's/android:label="[^"]*"/android:label="OneChat"/' android/app/src/main/AndroidManifest.xml
 
-      - name: 🚀 Retry build release APK if failed earlier
+      - name: Retry build release APK if failed earlier
         if: steps.build-apk.outcome == 'failure'
         run: flutter build apk --release
 
-      - name: 🏗️ Build release APK (normal path)
+      - name: Build release APK (normal path)
         if: steps.build-apk.outcome == 'success'
-        run: |
-          # The normal path includes applying branding even on a successful first build
-          echo "Applying branding to successful build..."
-          flutter pub get
-          flutter pub run flutter_launcher_icons
-          sed -i 's/android:label="[^"]*"/android:label="OneChat"/' android/app/src/main/AndroidManifest.xml
+        run: flutter build apk --release
 
-          flutter build apk --release
-
-      - name: ⬆️ Upload APK artifact
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
-
