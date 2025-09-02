@@ -27,7 +27,7 @@ jobs:
         run: |
           if [ ! -d "android" ]; then
             echo "⚠ android folder missing. Creating..."
-            flutter create --platforms=android .
+            flutter create .
           fi
 
       # ---------------- Patch Gradle + Kotlin ----------------
@@ -61,7 +61,6 @@ jobs:
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.onechat">
 
-    <!-- ✅ Required for API calls -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -86,7 +85,6 @@ jobs:
 
         </activity>
 
-        <!-- Flutter-specific configuration -->
         <meta-data
             android:name="io.flutter.embedding.android.NormalTheme"
             android:resource="@style/NormalTheme"
@@ -106,12 +104,15 @@ EOL
           echo "🖼 Preparing res folders for launcher icons..."
           for size in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
             path="android/app/src/main/res/mipmap-$size"
-            if [ -f "$path" ]; then
-              rm "$path"
+            if [ -d "$path" ]; then
+              echo "  - Removing existing directory: $path"
+              rm -r "$path"
             fi
+            echo "  - Creating directory: $path"
             mkdir -p "$path"
           done
 
+          echo "🚀 Generating launcher icons..."
           flutter pub run flutter_launcher_icons:main
 
       # ---------------- Build release APK ----------------
@@ -124,3 +125,4 @@ EOL
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          
