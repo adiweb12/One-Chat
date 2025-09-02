@@ -42,7 +42,7 @@ jobs:
             sed -i 's/classpath "com.android.tools.build:gradle:[^"]*"/classpath "com.android.tools.build:gradle:8.1.2"/' android/build.gradle
           fi
 
-      # 🗂 Regenerate AndroidManifest.xml
+      # 🗂 Regenerate AndroidManifest.xml safely
       - name: Regenerate AndroidManifest.xml
         run: |
           echo "📝 Regenerating AndroidManifest.xml..."
