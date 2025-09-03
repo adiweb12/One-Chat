@@ -46,37 +46,37 @@ jobs:
 
           # settings.gradle
           cat > android/settings.gradle <<'EOL'
-include ':app'
-rootProject.name = 'onechat'
-EOL
+            include ':app'
+            rootProject.name = 'onechat'
+            EOL
 
           # Project-level build.gradle
           cat > android/build.gradle <<'EOL'
-buildscript {
-    ext.kotlin_version = '1.9.0'
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.1'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-EOL
+            buildscript {
+              ext.kotlin_version = '1.9.0'
+            repositories {
+               google()
+              mavenCentral()
+          }
+          dependencies {
+            classpath 'com.android.tools.build:gradle:8.1.1'
+            classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+          }
+          }
+          allprojects {
+            repositories {
+                 google()
+                 mavenCentral()
+            }
+          }
+          EOL
 
           # App-level build.gradle
           cat > android/app/build.gradle <<'EOL'
 apply plugin: 'com.android.application'
 
-android {
-    namespace 'com.adith.onechat'
+     android {
+        namespace 'com.adith.onechat'
     compileSdk 34
 
     defaultConfig {
