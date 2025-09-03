@@ -31,7 +31,7 @@ jobs:
         continue-on-error: true
         run: flutter build apk --release
 
-      # 5️⃣ Handle failed build: regenerate android folder
+      # 5️⃣ Handle failed build regenerate android folder
       - name: Regenerate android folder if build failed
         if: steps.build-apk-primary.outcome == 'failure'
         run: |
