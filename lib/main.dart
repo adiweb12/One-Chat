@@ -8,7 +8,7 @@ void main() {
   runApp(MyApp());
 }
 
-const String SERVER_IP = "onechatjdifivifrrfigiufitxtd6xy.onrender.com";
+const String SERVER_IP = "test-4udw.onrender.com";
 
 class MyApp extends StatelessWidget {
   @override
