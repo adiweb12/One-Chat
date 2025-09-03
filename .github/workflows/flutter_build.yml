@@ -73,19 +73,20 @@ jobs:
 
           # App-level build.gradle
           cat > android/app/build.gradle <<'EOL'
-apply plugin: 'com.android.application'
-android { 
-    namespace 'com.adith.onechat'
-   compileSdk 34
+          apply plugin: 'com.android.application'
+    
+          android { 
+              namespace 'com.adith.onechat'
+              compileSdk 34
 
-    defaultConfig {
-        applicationId "com.adith.onechat"
-        minSdk 21
-        targetSdk 34
-        versionCode 1
-        versionName "1.0.0"
-          }
-     } 
+              defaultConfig {
+                  applicationId "com.adith.onechat"
+                  minSdk 21
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0.0"
+            }
+          } 
 
 dependencies {
 }
