@@ -319,6 +319,13 @@ class _MainPageState extends State<MainPage> {
         headers: {"Content-Type": "application/json"},
         body: json.encode({"token": widget.token}),
       );
+      if (response.statusCode != 200) {
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Error: ${response.statusCode}')));
+        }
+        return;
+      }
       var data = json.decode(response.body);
       if (data['success']) {
         List<dynamic> userGroups = data['groups'] ?? [];
@@ -330,7 +337,6 @@ class _MainPageState extends State<MainPage> {
         });
       }
     } catch (e) {
-      print("Error fetching groups: $e");
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Error fetching groups: $e')));
