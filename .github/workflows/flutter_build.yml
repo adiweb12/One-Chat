@@ -68,6 +68,17 @@ jobs:
           </manifest>
           EOL
 
+          # Add MainActivity with V2 embedding
+           mkdir -p android/app/src/main/kotlin/com/adith/onechat
+           cat > android/app/src/main/kotlin/com/adith/onechat/MainActivity.kt <<'EOL'
+           package com.adith.onechat
+
+           import io.flutter.embedding.android.FlutterActivity
+
+           class MainActivity: FlutterActivity() {
+           }
+           EOL
+
           # Create flutter_launcher_icons.yaml for logo
           cat > flutter_launcher_icons.yaml <<'EOL'
           flutter_icons:
