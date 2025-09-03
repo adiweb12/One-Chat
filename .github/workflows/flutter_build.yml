@@ -13,13 +13,13 @@ jobs:
     steps:
       # Checkout repo
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4   # 🔄 updated to latest
 
       # Setup Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.3'   # <- adjust if needed
+          flutter-version: '3.24.3'   # adjust if needed
 
       # Install dependencies
       - name: Install dependencies
@@ -56,7 +56,7 @@ jobs:
 
       # Upload artifact
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4   # 🔄 upgraded to v4
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
