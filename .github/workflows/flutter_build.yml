@@ -72,7 +72,7 @@ jobs:
          EOL
 
           # App-level build.gradle
-          cat > android/app/build.gradle <<EOL
+          cat > android/app/build.gradle <<'EOL'
 apply plugin: 'com.android.application'
 android {
     namespace 'com.adith.onechat'
@@ -90,7 +90,7 @@ dependencies {
 EOL
 
           # AndroidManifest.xml with Internet permission
-          cat > android/app/src/main/AndroidManifest.xml <<EOL
+          cat > android/app/src/main/AndroidManifest.xml <<'EOL'
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.adith.onechat">
     <uses-permission android:name="android.permission.INTERNET"/>
