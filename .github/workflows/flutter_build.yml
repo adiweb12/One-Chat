@@ -45,13 +45,13 @@ jobs:
 
           # Overwrite AndroidManifest.xml (adds internet + icon)
           cat > android/app/src/main/AndroidManifest.xml <<'EOL'
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.adith.onechat">
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <application
-        android:label="OneChat"
-        android:icon="@mipmap/ic_launcher">
-        <activity
+           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+               package="com.adith.onechat">
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <application
+                  android:label="OneChat"
+          android:icon="@mipmap/ic_launcher">
+          <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
@@ -63,10 +63,10 @@ jobs:
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
-    </application>
-</manifest>
-EOL
+          </activity>
+          </application>
+          </manifest>
+          EOL
 
           # Create flutter_launcher_icons.yaml for logo
           cat > flutter_launcher_icons.yaml <<'EOL'
