@@ -1,4 +1,4 @@
-name: Flutter Build
+name: Flutter CI
 
 on:
   push:
@@ -11,96 +11,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
-      - uses: actions/checkout@v3
+      # Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      # 2. Setup Flutter
-      - uses: subosito/flutter-action@v2
+      # Setup Flutter
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.6'   # You can change to your version
+          flutter-version: '3.24.3'   # <- adjust if needed
 
-      # 3. Install dependencies
+      # Install dependencies
       - name: Install dependencies
         run: flutter pub get
 
-      # 4. Regenerate Android project with V2 embedding
-      - name: Regenerate Android project with V2 embedding
+      # ⚠️ Always regenerate android folder (forces V2 embedding)
+      - name: Regenerate android folder
         run: |
+          echo "⚠️ Removing old android/ folder and recreating..."
           rm -rf android
-          flutter create --platforms=android .
-          
-          # Fix package name in manifest
-          sed -i 's/package="com.example.onechat"/package="com.adith.onechat"/g' android/app/src/main/AndroidManifest.xml
-          
-          # Remove wrong kotlin folder
-          rm -rf android/app/src/main/kotlin/com/example
-          
-          # Create correct MainActivity with V2 embedding
-          mkdir -p android/app/src/main/kotlin/com/adith/onechat
-          cat > android/app/src/main/kotlin/com/adith/onechat/MainActivity.kt <<'EOL'
-           package com.adith.onechat
+          flutter create . --platforms=android
 
-           import io.flutter.embedding.android.FlutterActivity
-
-           class MainActivity: FlutterActivity() {
-           }
-           EOL
-
-      # 5. Overwrite AndroidManifest.xml (with internet + icon)
-      - name: Overwrite AndroidManifest.xml
+      # ✅ Add Internet permission + set custom launcher icon in AndroidManifest.xml
+      - name: Patch AndroidManifest.xml
         run: |
-          cat > android/app/src/main/AndroidManifest.xml <<'EOL'
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-            package="com.adith.onechat">
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
 
-            <uses-permission android:name="android.permission.INTERNET"/>
+          # Add INTERNET permission before <application>
+          sed -i '/<application/i\
+          <uses-permission android:name="android.permission.INTERNET"/>' $MANIFEST
 
-               <application
-                   android:label="OneChat"
-                   android:icon="@mipmap/ic_launcher">
-                 <activity
-                     android:name=".MainActivity"
-                     android:exported="true"
-                     android:launchMode="singleTop"
-                     android:theme="@style/LaunchTheme"
-                     android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-                     android:hardwareAccelerated="true"
-                     android:windowSoftInputMode="adjustResize">
-                       <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
-                       </intent-filter>
-                 </activity>
-              </application>
-             </manifest>
-             EOL
+          # Ensure app uses your launcher icon
+          sed -i 's/android:icon="@mipmap\/ic_launcher"/android:icon="@mipmap\/launcher_icon"/' $MANIFEST
 
-      # 6. Create flutter_launcher_icons.yaml
-      - name: Create flutter_launcher_icons.yaml
-        run: |
-          cat > flutter_launcher_icons.yaml <<'EOL'
-          flutter_icons:
-          android: true
-          ios: true
-          image_path: "image/logo.png"
-          EOL
+          echo "✅ Patched AndroidManifest.xml"
 
-      # 7. Get dependencies again
-      - name: Get dependencies again
-        run: flutter pub get
-
-      # 8. Generate launcher icons
+      # Run flutter_launcher_icons (your image/logo.png)
       - name: Generate launcher icons
         run: flutter pub run flutter_launcher_icons
 
-      # 9. Build APK
-      - name: Build APK
+      # Build APK
+      - name: Build release APK
         run: flutter build apk --release
 
-      # 10. Upload APK artifact
+      # Upload artifact
       - name: Upload APK artifact
-        if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
