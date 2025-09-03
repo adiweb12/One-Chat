@@ -114,6 +114,15 @@ jobs:
           distributionUrl=https\://services.gradle.org/distributions/gradle-8.2.1-bin.zip
           EOL
 
+
+          # Create flutter_launcher_icons.yaml
+          cat > flutter_launcher_icons.yaml <<'EOL'
+              flutter_icons:
+              android: true
+              ios: true
+              image_path: "image/logo.png"
+              EOL
+
           # Fetch dependencies for new android folder
           flutter pub get
 
