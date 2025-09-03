@@ -136,7 +136,7 @@ class _LoginPageState extends State<LoginPage> {
                   controller: passwordController,
                   obscureText: true,
                   decoration: InputDecoration(
-                    hintText: '123$%^gkf',
+                    hintText: '123u%^gkf',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.lock),
                   ),
@@ -156,7 +156,7 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: () => SignUpPage()),
+                      MaterialPageRoute(builder: (context) => SignUpPage()),
                     );
                   },
                   child: Text(
@@ -352,7 +352,7 @@ class _MainPageState extends State<MainPage> {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: () => ProfilePage(
+                    builder: (context) => ProfilePage(
                         username: widget.username, token: widget.token)),
               );
               await refreshGroups();
@@ -383,7 +383,7 @@ class _MainPageState extends State<MainPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: () => ChatPage(
+                            builder: (context) => ChatPage(
                               groupName: group['name'] as String,
                               username: widget.username,
                               groupNumber: group['number'] as String,
@@ -410,7 +410,7 @@ class _MainPageState extends State<MainPage> {
                     await Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: () => CreatePage(
+                          builder: (context) => CreatePage(
                               username: widget.username, token: widget.token)),
                     );
                     await refreshGroups();
@@ -423,7 +423,7 @@ class _MainPageState extends State<MainPage> {
                     await Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: () => JoinPage(
+                          builder: (context) => JoinPage(
                               username: widget.username, token: widget.token)),
                     );
                     await refreshGroups();
