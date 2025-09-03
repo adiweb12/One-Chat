@@ -88,21 +88,21 @@ jobs:
             }
           } 
 
-dependencies {
-}
-EOL
+          dependencies {
+           }
+            EOL
 
           # AndroidManifest.xml with Internet permission
           cat > android/app/src/main/AndroidManifest.xml <<'EOL'
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.adith.onechat">
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <application
-        android:label="OneChat"
-        android:icon="@mipmap/ic_launcher">
-    </application>
-</manifest>
-EOL
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              package="com.adith.onechat">
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <application
+                  android:label="OneChat"
+          android:icon="@mipmap/ic_launcher">
+              </application>
+          </manifest>
+          EOL
 
           # gradle-wrapper.properties
           mkdir -p android/gradle/wrapper
