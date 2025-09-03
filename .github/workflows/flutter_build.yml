@@ -2,76 +2,69 @@ name: Flutter Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repo
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      # 1. Checkout repository
+      - uses: actions/checkout@v3
 
-      # 2️⃣ Install Flutter
-      - name: Install Flutter
-        uses: subosito/flutter-action@v2
+      # 2. Setup Flutter
+      - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.19.6'   # Use your Flutter version
 
-      # 3️⃣ Get dependencies
-      - name: Get dependencies
+      # 3. Install dependencies
+      - name: Install dependencies
         run: flutter pub get
 
-      # 4️⃣ Try building with existing android folder
-      - name: Try building with existing android folder
-        id: build-apk-primary
-        continue-on-error: true
-        run: flutter build apk --release
-
-      # 5️⃣ Handle failed build regenerate android folder
-      - name: Regenerate android folder if build failed
-        if: steps.build-apk-primary.outcome == 'failure'
+      # 4. Overwrite AndroidManifest.xml
+      - name: Overwrite AndroidManifest.xml
         run: |
-          echo "⚠️ Initial build failed. Regenerating android/ folder..."
-
-          # Remove broken android folder
-          rm -rf android
-
-          # Recreate using modern embedding
-          flutter create .
-
-          # Overwrite AndroidManifest.xml (adds internet + icon)
+          mkdir -p android/app/src/main
           cat > android/app/src/main/AndroidManifest.xml <<'EOL'
-           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-               package="com.adith.onechat">
-              <uses-permission android:name="android.permission.INTERNET"/>
-              <application
-                  android:label="OneChat"
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.adith.onechat">
+
+          <uses-permission android:name="android.permission.INTERNET"/>
+
+            <application
+                android:label="OneChat"
           android:icon="@mipmap/ic_launcher">
-          <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTop"
-            android:theme="@style/LaunchTheme"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-            android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-          </activity>
+               <activity
+                  android:name=".MainActivity"
+                  android:exported="true"
+                  android:launchMode="singleTop"
+                  android:theme="@style/LaunchTheme"
+                  android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+                  android:hardwareAccelerated="true"
+                  android:windowSoftInputMode="adjustResize">
+                   <intent-filter>
+                      <action android:name="android.intent.action.MAIN"/>
+                       <category android:name="android.intent.category.LAUNCHER"/>
+                   </intent-filter>
+              </activity>
           </application>
           </manifest>
           EOL
 
-          # Add MainActivity with V2 embedding
-           mkdir -p android/app/src/main/kotlin/com/adith/onechat
-           cat > android/app/src/main/kotlin/com/adith/onechat/MainActivity.kt <<'EOL'
-           package com.adith.onechat
+      # 5. Ensure MainActivity uses V2 embedding
+      - name: Fix MainActivity to V2 embedding
+        run: |
+          # Remove auto-generated wrong package
+          rm -rf android/app/src/main/kotlin/com/example
+
+          # Create correct folder
+          mkdir -p android/app/src/main/kotlin/com/adith/onechat
+
+          # Write MainActivity.kt with V2 embedding
+          cat > android/app/src/main/kotlin/com/adith/onechat/MainActivity.kt <<'EOL'
+          package com.adith.onechat
 
            import io.flutter.embedding.android.FlutterActivity
 
@@ -79,26 +72,29 @@ jobs:
            }
            EOL
 
-          # Create flutter_launcher_icons.yaml for logo
+      # 6. Create flutter_launcher_icons.yaml
+      - name: Create flutter_launcher_icons.yaml
+        run: |
           cat > flutter_launcher_icons.yaml <<'EOL'
-          flutter_icons:
-          android: true
-          ios: true
-          image_path: "image/logo.png"
+           flutter_icons:
+           android: true
+           ios: true
+           image_path: "image/logo.png"
           EOL
 
-          # Get dependencies again
-          flutter pub get
+      # 7. Get dependencies again
+      - name: Get dependencies again
+        run: flutter pub get
 
-          # Generate launcher icons
-          flutter pub run flutter_launcher_icons:main -f flutter_launcher_icons.yaml
+      # 8. Generate launcher icons
+      - name: Generate launcher icons
+        run: flutter pub run flutter_launcher_icons
 
-      # 6️⃣ Retry build after regeneration
-      - name: Retry build after regeneration
-        if: steps.build-apk-primary.outcome == 'failure'
+      # 9. Build APK
+      - name: Build APK
         run: flutter build apk --release
 
-      # 7️⃣ Upload APK artifact
+      # 10. Upload APK artifact
       - name: Upload APK artifact
         if: success()
         uses: actions/upload-artifact@v4
