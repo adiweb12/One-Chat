@@ -46,9 +46,9 @@ jobs:
 
           # settings.gradle
           cat > android/settings.gradle <<'EOL'
-          include ':app'
-          rootProject.name = 'onechat' 
-          EOL
+              include ':app'
+              rootProject.name = 'onechat' 
+               EOL
 
           # Project-level build.gradle
           cat > android/build.gradle <<EOL
